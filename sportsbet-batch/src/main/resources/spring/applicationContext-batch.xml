@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:util="http://www.springframework.org/schema/util" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+                        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+    <bean id="contextSource" class="org.springframework.ldap.core.support.LdapContextSource">
+        <property name="url" value="ldaps://directory.lvl.intranet:636" />
+        <property name="base" value="dc=smile,dc=fr" />
+    </bean>
+
+    <bean id="ldapTemplate" class="org.springframework.ldap.core.LdapTemplate">
+        <constructor-arg ref="contextSource" />
+    </bean>
+
+    <bean id="personDao" class="fr.philippedeoliveira.dao.LDAPPersonDAO">
+        <property name="ldapTemplate" ref="ldapTemplate" />
+    </bean>
+    
+    <bean id="app" class="fr.philippedeoliveira.App">
+        <property name="personDAO" ref="personDao" />
+    </bean>
+
+    <bean id="ppc"
+        class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreUnresolvablePlaceholders" value="true" />
+        <property name="locations">
+            <list>
+                <value>classpath:default-configs/application-technical-default.properties</value>
+            </list>
+        </property>
+    </bean>
+    
+    <util:properties id="appProperties" location="classpath:default-configs/application-functionnal.properties" />
+</beans>

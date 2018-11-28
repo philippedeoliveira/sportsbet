@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC
+     "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+         "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+    <query name="game.findGamesAndSort">
+        from
+            Game
+        order by
+            roundNumber desc, gameDate
+    </query>
+
+    <query name="bet.getBetsByPlayer">
+    <![CDATA[
+       select 
+            b
+       from 
+            Bet b join b.better better
+       where 
+            better.username=:login
+    ]]>
+    </query>
+    <query name="bet.getExactScoreBets">
+    <![CDATA[
+        select
+            new fr.philippedeoliveira.beans.PointLogin(u.username, count(*))
+        from
+            Bet b join b.game g join b.better u
+        where
+            b.receiverScore=g.receiverScore AND b.foreignerScore=g.foreignerScore
+            AND g.receiverScore is not null
+        group by
+            u.username
+    ]]>
+    </query>
+    <query name="bet.getWinningBets">
+    <![CDATA[
+        select
+            new fr.philippedeoliveira.beans.PointLogin(u.username, count(*))
+        from
+            Bet b join b.game g join b.better u
+        where
+            (
+                (b.receiverScore = b.foreignerScore AND g.receiverScore = g.foreignerScore)
+                OR (b.receiverScore > b.foreignerScore AND g.receiverScore > g.foreignerScore)
+                OR (b.receiverScore < b.foreignerScore AND g.receiverScore < g.foreignerScore)
+            )
+            AND NOT (b.receiverScore=g.receiverScore AND b.foreignerScore=g.foreignerScore)
+            AND g.receiverScore is not null
+        group by
+            u.username
+    
+    ]]>
+    </query>
+    <query name="bet.getNumberOfBetsByPlayerOnPlayedGames">
+    <![CDATA[
+        select
+            count(*)
+        from
+            Bet b join b.game g join b.better u
+        where
+            g.receiverScore is not null
+            AND u.username = :login
+    ]]>
+    </query>
+    <query name="user.getUsersOfBu">
+    <![CDATA[
+        from
+            User u
+        where
+            u.businessUnit.id = :buId
+    ]]>
+    </query>
+    <query name="bet.getNbBettersByGame">
+    <![CDATA[
+        select
+            new fr.philippedeoliveira.beans.NbBettersByGame(g.id, count(*))
+        from
+            Bet b join b.game g
+        group by
+            g.id
+    ]]>
+    </query>
+    <query name="bet.nbExactScoreByGame">
+    <![CDATA[
+        select
+            new fr.philippedeoliveira.beans.NbExactScoreByGame(g.id, count(*))
+        from
+            Bet b join b.game g
+        where
+            b.receiverScore=g.receiverScore AND b.foreignerScore=g.foreignerScore
+            AND g.receiverScore is not null
+        group by
+            g.id
+    ]]>
+    </query>
+    <query name="user.getExactScoreGameBetByUser">
+    <![CDATA[
+        select
+            g
+        from
+            Bet b join b.game g join b.better u
+        where
+            b.receiverScore=g.receiverScore AND b.foreignerScore=g.foreignerScore
+            AND g.receiverScore is not null
+            AND u.username=:username
+    ]]>
+    </query>
+    <query name="bet.getNumberOfPeopleThatBetSameScore">
+    <![CDATA[
+        select
+            new fr.philippedeoliveira.beans.NumberOfPeople(myBets.game.id, count(*))
+        from
+            Bet as myBets, Bet as theirBets
+        where
+            myBets.game = theirBets.game
+            AND myBets.receiverScore = theirBets.receiverScore
+            AND myBets.foreignerScore = theirBets.foreignerScore
+            AND myBets.better.username = :login
+            AND theirBets.better.username != :login
+        group by
+            myBets.game
+    ]]>
+    </query>
+    <query name="bet.getNumberOfPeopleThatBetSameResult">
+    <![CDATA[
+        select
+            new fr.philippedeoliveira.beans.NumberOfPeople(myBets.game.id, count(*))
+        from
+            Bet as myBets, Bet as theirBets
+        where
+            myBets.game = theirBets.game
+            AND (
+                (myBets.receiverScore = myBets.foreignerScore AND theirBets.receiverScore = theirBets.foreignerScore)
+                OR (myBets.receiverScore > myBets.foreignerScore AND theirBets.receiverScore > theirBets.foreignerScore)
+                OR (myBets.receiverScore < myBets.foreignerScore AND theirBets.receiverScore < theirBets.foreignerScore)
+            )
+            AND myBets.better.username = :login
+        group by
+            myBets.game
+    ]]>
+    </query>
+    <query name="bet.nbGoodResultByGame">
+    <![CDATA[
+        select
+            new fr.philippedeoliveira.beans.NbGoodResultByGame(g.id, count(*))
+        from
+            Bet b join b.game g
+        where
+            (
+                (b.receiverScore = b.foreignerScore AND g.receiverScore = g.foreignerScore)
+                OR (b.receiverScore > b.foreignerScore AND g.receiverScore > g.foreignerScore)
+                OR (b.receiverScore < b.foreignerScore AND g.receiverScore < g.foreignerScore)
+            )
+            AND g.receiverScore is not null
+        group by
+            g.id
+    ]]>
+    </query>
+    <query name="game.findAllTeams">
+    <![CDATA[
+        select distinct
+            g.receiver
+        from
+            Game g
+        order by
+            g.receiver
+    ]]>
+    </query>
+    <query name="user.hasFoundWinner">
+    <![CDATA[
+        select
+            u.username
+        from
+            User u, Winner w
+        where
+            u.username = :username 
+            AND u.tournamentWinnerBet = w.winningTeam 
+    ]]>
+    </query>
+</hibernate-mapping> 
