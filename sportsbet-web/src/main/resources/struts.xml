@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC
+    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+
+    <constant name="struts.devMode" value="true" />
+
+    <package name="/" extends="struts-default">
+        <result-types>
+            <result-type name="tiles" class="org.apache.struts2.views.tiles.TilesResult" />
+        </result-types>
+
+        <default-class-ref class="fr.philippedeoliveira.actions.AbstractSportsbetAction" />
+
+        <action name="login">
+            <result type="tiles">/login.tiles</result>
+        </action>
+
+        <action name="listBets" class="betAction" method="listPlayerBets">
+            <result type="tiles">/listBets.tiles</result>
+        </action>
+
+        <action name="bet" class="betAction" method="bet">
+            <result type="redirectAction">listBets?save=ok</result>
+        </action>
+        
+        <action name="ranking" class="rankingAction">
+            <result type="tiles">/ranking.tiles</result>
+        </action>
+        
+        <action name="buRanking" class="buRankingAction">
+            <result type="tiles">/ranking.tiles</result>
+        </action>
+        
+        <action name="rules">
+            <result type="tiles">/rules.tiles</result>
+        </action>
+    </package>
+
+</struts>

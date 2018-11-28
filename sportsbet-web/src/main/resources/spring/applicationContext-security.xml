@@ -1,0 +1,62 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security" xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                    http://www.springframework.org/schema/security 
+                    http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+
+    <http pattern="/css/**" security="none" />
+    <http pattern="/img/**" security="none" />
+
+    <http use-expressions="true" entry-point-ref="casEntryPoint">
+        <custom-filter position="CAS_FILTER" ref="casFilter" />
+        <intercept-url pattern="/**" access="isAuthenticated()" />
+    </http>
+    
+    <ldap-user-service id="ldapUserService" 
+        group-search-base="ou=groups"
+        group-role-attribute="cn"
+        group-search-filter="(member={0})"
+        user-search-base="ou=users"
+        user-search-filter="uid={0}"
+        user-context-mapper-ref="userContextMapper"/>
+
+    <ldap-server url="${ldap.serverUrl}" />
+    
+    <beans:bean id="tokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+        <beans:property name="dataSource" ref="dataSource"/>
+    </beans:bean>
+    
+    <!-- CAS config -->
+    
+    <beans:bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties">
+        <beans:property name="service" value="${cas.service.url}"/>
+        <beans:property name="sendRenew" value="false"/>
+    </beans:bean>
+
+    <beans:bean id="casFilter"
+          class="org.springframework.security.cas.web.CasAuthenticationFilter">
+      <beans:property name="authenticationManager" ref="authenticationManager"/>
+    </beans:bean>
+    
+    <beans:bean id="casEntryPoint" class="org.springframework.security.cas.web.CasAuthenticationEntryPoint">
+      <beans:property name="loginUrl" value="https://sso.smile.fr/cas/login"/>
+      <beans:property name="serviceProperties" ref="serviceProperties"/>
+    </beans:bean>
+    
+    <authentication-manager alias="authenticationManager">
+        <authentication-provider ref="casAuthenticationProvider" />
+    </authentication-manager>
+
+    <beans:bean id="casAuthenticationProvider" class="org.springframework.security.cas.authentication.CasAuthenticationProvider">
+        <beans:property name="userDetailsService" ref="ldapUserService"/> <!-- Map to a CAS user Service or to the already existing LDAP user service -->
+        <beans:property name="serviceProperties" ref="serviceProperties" />
+        <beans:property name="ticketValidator">
+            <beans:bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+                <beans:constructor-arg index="0" value="https://sso.smile.fr/cas" />
+            </beans:bean>
+        </beans:property>
+        <beans:property name="key" value="sportsbet-cas-key"/>
+  </beans:bean>
+    
+</beans:beans>

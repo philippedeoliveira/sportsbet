@@ -1,0 +1,44 @@
+<beans:beans xmlns="http://www.springframework.org/schema/security" xmlns:beans="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                    http://www.springframework.org/schema/security 
+                    http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+
+    <http pattern="/css/**" security="none" />
+    <http pattern="/img/**" security="none" />
+
+    <http use-expressions="true">
+        <intercept-url pattern="/admin.jsp" access="hasRole('ADMIN')" />
+        <intercept-url pattern="/login.jsp" access="permitAll" />
+        <intercept-url pattern="/login.action" access="permitAll" />
+        <intercept-url pattern="/index.jsp" access="permitAll" />
+        <intercept-url pattern="/**" access="isAuthenticated()" />
+        <form-login login-page="/" default-target-url="/pages/listBets.action" authentication-failure-url="/" />
+        <logout />
+        <remember-me key="_spring_security_remember_me"
+                     token-validity-seconds="604800"
+                     token-repository-ref="tokenRepository"/>
+    </http>
+    
+    <ldap-user-service id="ldapUserService" 
+        group-search-base="ou=groups"
+        group-role-attribute="cn"
+        group-search-filter="(member={0})"
+        user-search-base="ou=users"
+        user-search-filter="uid={0}"
+        user-context-mapper-ref="userContextMapper"/>
+
+    <ldap-server url="${ldap.serverUrl}" />
+
+    <authentication-manager>
+        <ldap-authentication-provider
+             user-dn-pattern="${ldap.userDn}"
+             user-context-mapper-ref="userContextMapper"/>
+    </authentication-manager>
+    
+    <beans:bean id="tokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+        <beans:property name="dataSource" ref="dataSource"/>
+    </beans:bean>
+    
+</beans:beans>
